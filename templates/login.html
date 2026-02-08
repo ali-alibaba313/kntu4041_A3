@@ -1,22 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
 <head>
-<title>Login</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود - سامانه WebGIS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-
-<h2>Login</h2>
-
-<form method="POST">
-<input name="username" placeholder="Username" required>
-<input name="password" type="password" placeholder="Password" required>
-<button>Login</button>
-</form>
-
-<p style="color:red">{{ error }}</p>
-
-<a href="/register">Register</a>
-
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="logo">🗺️</div>
+                <h1>ورود به سامانه</h1>
+                <p class="subtitle">سامانه اطلاعات جغرافیایی وب‌محور</p>
+            </div>
+            
+            {% if error %}
+            <div class="alert alert-error">
+                <span class="alert-icon">❌</span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+                <div class="form-group">
+                    <label for="username">
+                        <span class="label-icon">👤</span>
+                        نام کاربری
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input"
+                        placeholder="نام کاربری خود را وارد کنید"
+                        required 
+                        autofocus
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <span class="label-icon">🔒</span>
+                        رمز عبور
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input"
+                        placeholder="رمز عبور خود را وارد کنید"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <span>ورود به سامانه</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>حساب کاربری ندارید؟</p>
+                <a href="{{ url_for('register') }}" class="link-primary">
+                    ثبت‌نام کنید
+                </a>
+            </div>
+        </div>
+        
+        <div class="auth-info">
+            <div class="info-card">
+                <h3>💡 راهنمای استفاده</h3>
+                <ul>
+                    <li>برای ورود به سامانه، ابتدا باید ثبت‌نام کنید</li>
+                    <li>از رمز عبور قوی استفاده کنید</li>
+                    <li>پس از ورود، به نقشه WebGIS دسترسی خواهید داشت</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
+
