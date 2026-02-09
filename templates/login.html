@@ -3,64 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ورود / ثبت‌نام - WebGIS</title>
+    <title>ورود به سیستم</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="auth-container">
         <div class="auth-box">
-            <h1>🗺️ WebGIS Portal</h1>
+            <h2>🔐 ورود به سیستم</h2>
             
-            <!-- فرم ورود -->
-            <div class="tab-content" id="login-form">
-                <h2>ورود به سیستم</h2>
-                <form action="/login" method="POST">
-                    <div class="form-group">
-                        <label for="login-username">نام کاربری:</label>
-                        <input type="text" id="login-username" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">رمز عبور:</label>
-                        <input type="password" id="login-password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn-primary">ورود</button>
-                </form>
-                <p class="switch-form">حساب کاربری ندارید؟ <a href="#" onclick="showRegister()">ثبت‌نام کنید</a></p>
-            </div>
-
-            <!-- فرم ثبت‌نام -->
-            <div class="tab-content hidden" id="register-form">
-                <h2>ثبت‌نام</h2>
-                <form action="/register" method="POST">
-                    <div class="form-group">
-                        <label for="reg-username">نام کاربری:</label>
-                        <input type="text" id="reg-username" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-email">ایمیل:</label>
-                        <input type="email" id="reg-email" name="email">
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-password">رمز عبور:</label>
-                        <input type="password" id="reg-password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn-primary">ثبت‌نام</button>
-                </form>
-                <p class="switch-form">حساب کاربری دارید؟ <a href="#" onclick="showLogin()">وارد شوید</a></p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="username">نام کاربری</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">رمز عبور</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary">ورود</button>
+            </form>
+            
+            <div class="auth-links">
+                <p>حساب کاربری ندارید؟ <a href="{{ url_for('register') }}">ثبت‌نام کنید</a></p>
             </div>
         </div>
     </div>
-
-    <script>
-        function showRegister() {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('register-form').classList.remove('hidden');
-        }
-        
-        function showLogin() {
-            document.getElementById('register-form').classList.add('hidden');
-            document.getElementById('login-form').classList.remove('hidden');
-        }
-    </script>
 </body>
 </html>
