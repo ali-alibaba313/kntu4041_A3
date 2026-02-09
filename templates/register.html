@@ -3,140 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ثبت‌نام - سامانه WebGIS</title>
+    <title>ثبت‌نام</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="auth-page">
+<body>
     <div class="auth-container">
         <div class="auth-box">
-            <div class="auth-header">
-                <div class="logo">🗺️</div>
-                <h1>ثبت‌نام در سامانه</h1>
-                <p class="subtitle">ایجاد حساب کاربری جدید</p>
-            </div>
+            <h2>📝 ثبت‌نام در سیستم</h2>
             
-            {% if error %}
-            <div class="alert alert-error">
-                <span class="alert-icon">❌</span>
-                <span>{{ error }}</span>
-            </div>
-            {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             
-            {% if success %}
-            <div class="alert alert-success">
-                <span class="alert-icon">✅</span>
-                <span>{{ success }}</span>
-            </div>
-            {% endif %}
-            
-            <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+            <form method="POST" action="{{ url_for('register') }}">
                 <div class="form-group">
-                    <label for="username">
-                        <span class="label-icon">👤</span>
-                        نام کاربری
-                    </label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
-                        class="form-input"
-                        placeholder="حداقل 3 کاراکتر"
-                        minlength="3"
-                        required 
-                        autofocus
-                    >
-                    <small class="form-hint">نام کاربری شما برای ورود به سیستم استفاده می‌شود</small>
+                    <label for="username">نام کاربری</label>
+                    <input type="text" id="username" name="username" required minlength="3">
                 </div>
                 
                 <div class="form-group">
-                    <label for="email">
-                        <span class="label-icon">📧</span>
-                        ایمیل
-                    </label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        class="form-input"
-                        placeholder="example@domain.com"
-                        required
-                    >
-                    <small class="form-hint">یک ایمیل معتبر وارد کنید</small>
+                    <label for="password">رمز عبور</label>
+                    <input type="password" id="password" name="password" required minlength="4">
                 </div>
                 
-                <div class="form-group">
-                    <label for="password">
-                        <span class="label-icon">🔒</span>
-                        رمز عبور
-                    </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        class="form-input"
-                        placeholder="حداقل 6 کاراکتر"
-                        minlength="6"
-                        required
-                    >
-                    <small class="form-hint">رمز عبور قوی انتخاب کنید</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="confirm_password">
-                        <span class="label-icon">🔐</span>
-                        تکرار رمز عبور
-                    </label>
-                    <input 
-                        type="password" 
-                        id="confirm_password" 
-                        name="confirm_password" 
-                        class="form-input"
-                        placeholder="رمز عبور را دوباره وارد کنید"
-                        minlength="6"
-                        required
-                    >
-                    <small class="form-hint">برای تایید، رمز عبور را مجدد وارد کنید</small>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    <span>ثبت‌نام و ورود</span>
-                    <span class="btn-icon">→</span>
-                </button>
+                <button type="submit" class="btn-primary">ثبت‌نام</button>
             </form>
             
-            <div class="auth-footer">
-                <p>قبلاً ثبت‌نام کرده‌اید؟</p>
-                <a href="{{ url_for('login') }}" class="link-primary">
-                    وارد شوید
-                </a>
-            </div>
-        </div>
-        
-        <div class="auth-info">
-            <div class="info-card">
-                <h3>🎯 ویژگی‌های سامانه</h3>
-                <ul>
-                    <li>نمایش لایه‌های WMS از GeoServer</li>
-                    <li>قابلیت GetFeatureInfo با کلیک روی نقشه</li>
-                    <li>رابط کاربری مدرن و کاربرپسند</li>
-                    <li>امنیت بالا با احراز هویت Cookie-based</li>
-                </ul>
+            <div class="auth-links">
+                <p>قبلاً ثبت‌نام کرده‌اید؟ <a href="{{ url_for('login') }}">وارد شوید</a></p>
             </div>
         </div>
     </div>
-    
-    <script>
-        // Client-side password confirmation validation
-        document.querySelector('.auth-form').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            
-            if (password !== confirmPassword) {
-                e.preventDefault();
-                alert('رمز عبور و تکرار آن یکسان نیست!');
-                document.getElementById('confirm_password').focus();
-            }
-        });
-    </script>
 </body>
 </html>
