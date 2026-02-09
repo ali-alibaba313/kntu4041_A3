@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - صفحه پیدا نشد</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="error-container">
+        <div>
+            <h1>404</h1>
+            <p>😕 صفحه مورد نظر پیدا نشد</p>
+            <a href="{{ url_for('login') }}" class="btn-home">🏠 بازگشت به خانه</a>
+        </div>
+    </div>
+</body>
+</html>
