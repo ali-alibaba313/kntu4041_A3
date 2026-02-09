@@ -3,70 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS - نقشه</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <title>سیستم GIS وب</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    
+    <!-- Leaflet Heatmap CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazir', 'Tahoma', sans-serif;
+            overflow: hidden;
+        }
+
+        /* نقشه */
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        /* دکمه Toggle */
+        #toggleBtn {
+            position: fixed;
+            top: 20px;
+            right: 330px;
+            z-index: 1001;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        #toggleBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Sidebar */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 320px;
+            height: 100vh;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+            padding: 20px;
+        }
+
+        #sidebar h2 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .tool-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tool-section h3 {
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .btn-tool {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-tool:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-tool:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3941 0%, #c62828 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f09819 0%, #ff512f 100%);
+        }
+
+        /* Logout Button */
+        .logout-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Scrollbar سایدبار */
+        #sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 280px;
+            }
+            
+            #toggleBtn {
+                right: 290px;
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+        }
+
+        /* چاپ */
+        @media print {
+            #sidebar, #toggleBtn {
+                display: none !important;
+            }
+            #map {
+                position: relative;
+                width: 100%;
+                height: 100vh;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="map-header">
-        <h2>🌍 سامانه WebGIS</h2>
-        <div class="user-info">
-            <span>👤 {{ username }}</span>
-            <a href="{{ url_for('logout') }}" class="btn-primary" style="padding: 8px 20px; text-decoration: none;">خروج</a>
-        </div>
-    </div>
-
-    <!-- Map Container -->
+    <!-- نقشه -->
     <div id="map"></div>
 
-    <!-- Toolbar (Right Side) -->
-    <div class="toolbar">
-        <h4>🛠️ ابزارها</h4>
-        
-        <div class="tool-group">
-            <h5>📏 اندازه‌گیری</h5>
-            <button onclick="measureDistance()">📐 اندازه‌گیری فاصله</button>
-            <button onclick="measureArea()">📊 اندازه‌گیری مساحت</button>
-            <button onclick="clearMeasure()" class="clear-btn">🗑️ پاک کردن اندازه‌گیری</button>
+    <!-- دکمه Toggle -->
+    <button id="toggleBtn" onclick="toggleSidebar()">✖ بستن</button>
+
+    <!-- Sidebar ابزارها -->
+    <div id="sidebar">
+        <h2>🗺️ ابزارهای GIS</h2>
+
+        <!-- بخش لایه‌ها -->
+        <div class="tool-section">
+            <h3>📍 لایه‌های پایه</h3>
+            <p style="color: #fff; font-size: 12px; margin-top: 5px;">
+                از منوی لایه‌ها در گوشه راست بالای نقشه استفاده کنید
+            </p>
         </div>
 
-        <div class="tool-group">
-            <h5>✏️ رسم</h5>
-            <button onclick="drawPoint()">📍 نقطه</button>
-            <button onclick="drawLine()">📏 خط</button>
-            <button onclick="drawPolygon()">⬟ چندضلعی</button>
-            <button onclick="clearDrawing()" class="clear-btn">🗑️ پاک کردن رسم</button>
+        <!-- بخش رسم -->
+        <div class="tool-section">
+            <h3>✏️ ابزار رسم</h3>
+            <p style="color: #fff; font-size: 12px;">
+                از ابزار رسم در سمت چپ نقشه استفاده کنید
+            </p>
         </div>
 
-        <div class="tool-group">
-            <h5>🧭 ناوبری</h5>
-            <button onclick="gotoXY()">🎯 GoTo XY</button>
+        <!-- بخش تحلیل -->
+        <div class="tool-section">
+            <h3>📊 تحلیل مکانی</h3>
+            <button class="btn-tool btn-info" onclick="toggleMeasure()">
+                <i class="fas fa-ruler"></i> اندازه‌گیری مسافت
+            </button>
+            <button class="btn-tool btn-info" onclick="createBuffer()">
+                <i class="fas fa-circle-notch"></i> ایجاد حریم (Buffer)
+            </button>
+            <button class="btn-tool btn-info" onclick="calculateIntersection()">
+                <i class="fas fa-object-group"></i> محاسبه تقاطع
+            </button>
         </div>
 
-        <div class="tool-group">
-            <h5>💾 خروجی</h5>
-            <button onclick="exportPNG()">🖼️ Export PNG</button>
-            <button onclick="printMap()">🖨️ Print</button>
+        <!-- بخش مسیریابی -->
+        <div class="tool-section">
+            <h3>🚗 مسیریابی و حرارتی</h3>
+            <button class="btn-tool btn-success" onclick="calculateRoute()">
+                <i class="fas fa-route"></i> مسیریابی
+            </button>
+            <button class="btn-tool btn-warning" onclick="toggleHeatmap()">
+                <i class="fas fa-fire"></i> نقشه حرارتی
+            </button>
+        </div>
+
+        <!-- بخش داده -->
+        <div class="tool-section">
+            <h3>💾 مدیریت داده</h3>
+            <button class="btn-tool" onclick="exportGeoJSON()">
+                <i class="fas fa-download"></i> Export GeoJSON
+            </button>
+            <button class="btn-tool" onclick="importGeoJSON()">
+                <i class="fas fa-upload"></i> Import GeoJSON
+            </button>
+            <button class="btn-tool" onclick="loadGeoServerLayer()">
+                <i class="fas fa-server"></i> بارگذاری از GeoServer
+            </button>
+        </div>
+
+        <!-- بخش خروجی -->
+        <div class="tool-section">
+            <h3>🖨️ خروجی</h3>
+            <button class="btn-tool btn-info" onclick="printMap()">
+                <i class="fas fa-print"></i> چاپ نقشه
+            </button>
+            <button class="btn-tool btn-danger" onclick="clearDrawings()">
+                <i class="fas fa-trash"></i> پاک کردن رسم‌ها
+            </button>
+        </div>
+
+        <!-- بخش خروج -->
+        <div class="logout-section">
+            <a href="{{ url_for('logout') }}" class="btn-tool btn-danger" style="display: block; text-decoration: none; text-align: center;">
+                <i class="fas fa-sign-out-alt"></i> خروج
+            </a>
         </div>
     </div>
 
-    <!-- Layer Panel (Left Side) -->
-    <div class="layer-panel">
-        <h4>🗺️ لایه‌های پایه</h4>
-        <button onclick="switchBaseLayer('OpenStreetMap')">🗺️ نقشه استاندارد</button>
-        <button onclick="switchBaseLayer('Satellite')">🛰️ تصویر ماهواره‌ای</button>
-        <button onclick="switchBaseLayer('Dark Mode')">🌙 حالت تاریک</button>
-        <button onclick="switchBaseLayer('Terrain')">⛰️ توپوگرافی</button>
-    </div>
+    <!-- کتابخانه‌های JavaScript -->
+    <!-- Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet Draw -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    
+    <!-- Leaflet Geometryutil -->
+    <script src="https://unpkg.com/leaflet-geometryutil@0.10.0/src/leaflet.geometryutil.js"></script>
+    
+    <!-- Leaflet Routing Machine -->
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    
+    <!-- Leaflet Heatmap -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <!-- Turf.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    
+    <!-- Leaflet Coordinates -->
+    <script src="https://unpkg.com/leaflet-coordinates@1.0.0/dist/Leaflet.Coordinates-0.1.5.min.js"></script>
+    
+    <!-- Leaflet Measure -->
+    <script src="https://unpkg.com/leaflet-measure@3.1.0/dist/leaflet-measure.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-measure@3.1.0/dist/leaflet-measure.min.css" />
 
-    <!-- Info Panel (Bottom Left) -->
-    <div id="info-panel">
-        <button class="close-info" onclick="closeInfo()">✕</button>
-        <div id="info-content"></div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <!-- کد اصلی نقشه -->
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 </body>
 </html>
