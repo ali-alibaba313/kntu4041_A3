@@ -43,7 +43,7 @@ function initMap() {
         "⛰️ توپوگرافی": topoLayer
     };
 
-    L.control.layers(baseMaps).addTo(map);
+    L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);
 
     // افزودن drawnItems به نقشه
     map.addLayer(drawnItems);
