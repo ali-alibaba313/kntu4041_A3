@@ -3,12 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سیستم اطلاعات جغرافیایی (GIS)</title>
+    <title>سیستم GIS وب</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet Draw CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.css" />
+    
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Leaflet Measure CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-measure@3.1.0/dist/leaflet-measure.min.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     <style>
         * {
@@ -18,96 +31,44 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Vazir', 'Tahoma', sans-serif;
             overflow: hidden;
         }
 
+        /* نقشه */
         #map {
-            width: 100vw;
-            height: 100vh;
             position: absolute;
             top: 0;
             left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
         }
 
-        /* ========== Sidebar ========== */
-        .sidebar {
+        /* دکمه Toggle */
+        #toggleBtn {
             position: fixed;
             top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, rgba(30, 60, 114, 0.95) 0%, rgba(42, 82, 152, 0.95) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            z-index: 1000;
-            max-width: 300px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .sidebar h2 {
+            right: 330px;
+            z-index: 999;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            margin-bottom: 15px;
-            font-size: 20px;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .sidebar input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar input[type="text"]::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .sidebar input[type="text"]:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .sidebar button {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, rgba(100, 181, 246, 0.9), rgba(66, 165, 245, 0.9));
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: none;
+            padding: 12px 20px;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .sidebar button:hover {
+        #toggleBtn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(100, 181, 246, 0.4);
-            background: linear-gradient(135deg, rgba(66, 165, 245, 1), rgba(33, 150, 243, 1));
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
-        .sidebar button:active {
-            transform: translateY(0);
-        }
-
-        .sidebar button.active {
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.9), rgba(255, 193, 7, 0.9));
-            border-color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* ========== Layer Control ========== */
+        /* استایل منوی لایه‌ها (Leaflet Control Layers) */
         .leaflet-control-layers {
             background: linear-gradient(135deg, rgba(30, 60, 114, 0.95) 0%, rgba(42, 82, 152, 0.95) 100%) !important;
             border: 2px solid rgba(255, 255, 255, 0.3) !important;
@@ -118,255 +79,177 @@
             z-index: 900 !important;
         }
 
-        .leaflet-control-layers-toggle {
-            background-image: none !important;
-            width: 40px !important;
-            height: 40px !important;
+        .leaflet-control-layers-expanded {
+            padding: 15px !important;
+            min-width: 200px !important;
         }
 
-        .leaflet-control-layers-toggle::before {
-            content: "🗺️";
-            font-size: 24px;
-            display: block;
-            text-align: center;
-            line-height: 40px;
+        .leaflet-control-layers-toggle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 8px !important;
         }
 
         .leaflet-control-layers label {
             color: white !important;
+            font-size: 14px !important;
             font-weight: bold !important;
+            margin: 8px 0 !important;
+            display: flex !important;
+            align-items: center !important;
         }
 
-        .leaflet-control-layers-expanded {
-            padding: 15px !important;
+        .leaflet-control-layers-base label {
+            padding: 8px 12px !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
         }
 
-        /* ========== Dialogs ========== */
-        .dialog {
-            display: none;
+        .leaflet-control-layers-base label:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            transform: translateX(-3px) !important;
+        }
+
+        .leaflet-control-layers-separator {
+            border-top: 2px solid rgba(255, 255, 255, 0.3) !important;
+            margin: 10px 0 !important;
+        }
+
+        .leaflet-control-layers input[type="radio"] {
+            margin-left: 10px !important;
+            cursor: pointer !important;
+        }
+
+        /* Sidebar */
+        #sidebar {
             position: fixed;
-            z-index: 2000;
-            left: 0;
             top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .dialog-content {
+            right: 0;
+            width: 320px;
+            height: 100vh;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            margin: 5% auto;
-            padding: 0;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            color: white;
-        }
-
-        .dialog-header {
-            padding: 20px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .dialog-header h3 {
-            margin: 0;
-            font-size: 20px;
-        }
-
-        .close-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            border-radius: 50%;
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .close-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg);
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-            padding: 0 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            font-size: 14px;
-        }
-
-        .form-group input:read-only {
-            background: rgba(255, 255, 255, 0.1);
-            cursor: not-allowed;
-        }
-
-        .form-group input::placeholder,
-        .form-group textarea::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .dialog-footer {
-            padding: 20px;
-            border-top: 2px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            gap: 10px;
-        }
-
-        .dialog-footer button {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .save-btn {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.9), rgba(56, 142, 60, 0.9));
-            color: white;
-        }
-
-        .save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-
-        .cancel-btn {
-            background: linear-gradient(135deg, rgba(244, 67, 54, 0.9), rgba(211, 47, 47, 0.9));
-            color: white;
-        }
-
-        .cancel-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
-        }
-
-        /* ========== Attribute Table ========== */
-        .attribute-table {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            max-height: 300px;
-            background: linear-gradient(135deg, rgba(30, 60, 114, 0.95) 0%, rgba(42, 82, 152, 0.95) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            overflow: hidden;
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
             z-index: 1000;
-        }
-
-        .table-header {
-            padding: 15px 20px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
-
-        .table-header h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .attribute-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .attribute-table thead {
-            background: rgba(255, 255, 255, 0.1);
-            position: sticky;
-            top: 0;
-        }
-
-        .attribute-table th,
-        .attribute-table td {
-            padding: 12px;
-            text-align: right;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-
-        .attribute-table th {
-            font-weight: bold;
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .attribute-table tbody {
-            display: block;
-            max-height: 150px;
             overflow-y: auto;
+            transition: right 0.3s ease;
+            padding: 20px;
         }
 
-        .attribute-table thead,
-        .attribute-table tbody tr {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        .attribute-table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        /* ========== Route Marker ========== */
-        .route-marker {
-            background: none;
-            border: none;
-            font-size: 24px;
+        #sidebar h2 {
+            color: white;
             text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        /* ========== Scrollbar ========== */
-        ::-webkit-scrollbar {
+        .tool-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tool-section h3 {
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .btn-tool {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-tool:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-tool:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3941 0%, #c62828 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f09819 0%, #ff512f 100%);
+        }
+
+        /* Logout Button */
+        .logout-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Scrollbar سایدبار */
+        #sidebar::-webkit-scrollbar {
             width: 8px;
         }
 
-        ::-webkit-scrollbar-track {
+        #sidebar::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            border-radius: 10px;
         }
 
-        ::-webkit-scrollbar-thumb {
+        #sidebar::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
+            border-radius: 10px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
+        #sidebar::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 280px;
+            }
+            
+            #toggleBtn {
+                right: 290px;
+                padding: 10px 15px;
+                font-size: 12px;
+            }
+        }
+
+        /* چاپ */
+        @media print {
+            #sidebar, #toggleBtn {
+                display: none !important;
+            }
+            #map {
+                position: relative;
+                width: 100%;
+                height: 100vh;
+            }
         }
     </style>
 </head>
@@ -374,102 +257,113 @@
     <!-- نقشه -->
     <div id="map"></div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <!-- دکمه Toggle -->
+    <button id="toggleBtn" onclick="toggleSidebar()">✖ بستن</button>
+
+    <!-- Sidebar ابزارها -->
+    <div id="sidebar">
         <h2>🗺️ ابزارهای GIS</h2>
-        
-        <!-- جستجو -->
-        <input type="text" id="searchInput" placeholder="جستجوی آدرس یا مکان...">
-        
-        <!-- دکمه‌های ابزارها -->
-        <button onclick="searchLocation()">🔍 جستجو</button>
-        <button id="measureBtn" onclick="toggleMeasure()">📏 اندازه‌گیری</button>
-        <button id="routingBtn" onclick="startRouting()">🚗 مسیریابی (کلیک روی نقشه)</button>
-        <button id="moveBtn" onclick="toggleMoveMode()">↔️ جابجایی عارضه</button>
-        <button onclick="toggleAttributeTable()">📊 جدول داده‌ها</button>
-        <button onclick="exportMap()">💾 اکسپورت نقشه</button>
-        <button onclick="exportShapefile()">📦 دانلود شیپ فایل</button>
-    </div>
-    
-    <!-- دیالوگ Attributes -->
-    <div id="attributeDialog" class="dialog">
-        <div class="dialog-content">
-            <div class="dialog-header">
-                <h3>مشخصات عارضه</h3>
-                <button class="close-btn" onclick="closeAttributeDialog()">×</button>
-            </div>
-            <form id="attributeForm" onsubmit="event.preventDefault(); saveFeatureAttributes();">
-                <div id="dynamicFields" style="padding: 20px 0;"></div>
-                <div class="dialog-footer">
-                    <button type="submit" class="save-btn">✓ ذخیره</button>
-                    <button type="button" class="cancel-btn" onclick="closeAttributeDialog()">✕ لغو</button>
-                </div>
-            </form>
+
+        <!-- بخش لایه‌ها -->
+        <div class="tool-section">
+            <h3>📍 لایه‌های پایه</h3>
+            <p style="color: #fff; font-size: 12px; margin-top: 5px;">
+                از منوی لایه‌ها در گوشه راست پائین نقشه استفاده کنید
+            </p>
         </div>
-    </div>
-    
-    <!-- جدول Attributes -->
-    <div id="attributeTable" class="attribute-table">
-        <div class="table-header">
-            <h3>📊 جدول داده‌ها</h3>
-            <button class="close-btn" onclick="closeAttributeTable()">×</button>
+
+        <!-- بخش رسم -->
+        <div class="tool-section">
+            <h3>✏️ ابزار رسم</h3>
+            <p style="color: #fff; font-size: 12px;">
+                از ابزار رسم در سمت چپ نقشه استفاده کنید
+            </p>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 8%;">ID</th>
-                    <th style="width: 20%;">نام</th>
-                    <th style="width: 25%;">توضیحات</th>
-                    <th style="width: 12%;">نوع</th>
-                    <th style="width: 35%;">مشخصات هندسی</th>
-                </tr>
-            </thead>
-            <tbody id="attributeTableBody"></tbody>
-        </table>
-    </div>
-    
-    <!-- دیالوگ Export -->
-    <div id="exportDialog" class="dialog">
-        <div class="dialog-content">
-            <div class="dialog-header">
-                <h3>💾 اکسپورت نقشه</h3>
-                <button class="close-btn" onclick="closeExportDialog()">×</button>
-            </div>
-            <div style="padding: 20px 0;">
-                <div class="form-group">
-                    <label>فرمت خروجی:</label>
-                    <select id="exportFormat">
-                        <option value="png">PNG (تصویر با کیفیت بالا)</option>
-                        <option value="jpg">JPG (تصویر فشرده)</option>
-                        <option value="pdf">PDF (سند قابل چاپ)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>محدوده نقشه:</label>
-                    <select id="exportExtent">
-                        <option value="current">نمای فعلی نقشه</option>
-                        <option value="full">تمام عوارض</option>
-                    </select>
-                </div>
-            </div>
-            <div class="dialog-footer">
-                <button onclick="performExport()" class="save-btn">💾 دانلود فایل</button>
-                <button class="cancel-btn" onclick="closeExportDialog()">✕ لغو</button>
-            </div>
+
+        <!-- بخش تحلیل -->
+        <div class="tool-section">
+            <h3>📊 تحلیل مکانی</h3>
+            <button class="btn-tool btn-info" onclick="toggleMeasure()">
+                <i class="fas fa-ruler"></i> اندازه‌گیری مسافت
+            </button>
+            <button class="btn-tool btn-info" onclick="createBuffer()">
+                <i class="fas fa-circle-notch"></i> ایجاد حریم (Buffer)
+            </button>
+            <button class="btn-tool btn-info" onclick="calculateIntersection()">
+                <i class="fas fa-object-group"></i> محاسبه تقاطع
+            </button>
+        </div>
+
+        <!-- بخش مسیریابی -->
+        <div class="tool-section">
+            <h3>🚗 مسیریابی و حرارتی</h3>
+            <button class="btn-tool btn-success" onclick="startRouting()">
+                <i class="fas fa-route"></i> مسیریابی (کلیک روی نقشه)
+            </button>
+            <button class="btn-tool btn-warning" onclick="toggleHeatmap()">
+                <i class="fas fa-fire"></i> نقشه حرارتی
+            </button>
+        </div>
+
+        <!-- بخش داده -->
+        <div class="tool-section">
+            <h3>💾 مدیریت داده</h3>
+            <button class="btn-tool" onclick="exportGeoJSON()">
+                <i class="fas fa-download"></i> Export GeoJSON
+            </button>
+            <button class="btn-tool" onclick="importGeoJSON()">
+                <i class="fas fa-upload"></i> Import GeoJSON
+            </button>
+            <button class="btn-tool" onclick="loadGeoServerLayer()">
+                <i class="fas fa-server"></i> بارگذاری از GeoServer
+            </button>
+        </div>
+
+        <!-- بخش خروجی -->
+        <div class="tool-section">
+            <h3>🖨️ خروجی</h3>
+            <button class="btn-tool btn-info" onclick="printMap()">
+                <i class="fas fa-print"></i> چاپ نقشه
+            </button>
+            <button class="btn-tool btn-danger" onclick="clearDrawings()">
+                <i class="fas fa-trash"></i> پاک کردن رسم‌ها
+            </button>
+        </div>
+
+        <!-- بخش خروج -->
+        <div class="logout-section">
+            <a href="{{ url_for('logout') }}" class="btn-tool btn-danger" style="display: block; text-decoration: none; text-align: center;">
+                <i class="fas fa-sign-out-alt"></i> خروج
+            </a>
         </div>
     </div>
 
-    <!-- Leaflet JS -->
+    <!-- کتابخانه‌های JavaScript -->
+    <!-- Leaflet -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet Draw -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-measure@3.1.0/dist/leaflet-measure.js"></script>
     
-    <!-- Export libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/shpjs/4.0.4/shp.min.js"></script>
+    <!-- Leaflet Geometryutil -->
+    <script src="https://unpkg.com/leaflet-geometryutil@0.10.0/src/leaflet.geometryutil.js"></script>
     
-    <!-- Map JS -->
+    <!-- Leaflet Routing Machine -->
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    
+    <!-- Leaflet Heatmap -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <!-- Turf.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    
+    <!-- Leaflet Coordinates -->
+    <script src="https://unpkg.com/leaflet-coordinates@1.0.0/dist/Leaflet.Coordinates-0.1.5.min.js"></script>
+    
+    <!-- Leaflet Measure -->
+    <script src="https://unpkg.com/leaflet-measure@3.1.0/dist/leaflet-measure.min.js"></script>
+
+    <!-- کد اصلی نقشه -->
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 </body>
 </html>
