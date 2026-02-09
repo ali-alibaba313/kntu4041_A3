@@ -3,94 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نقشه - سامانه WebGIS</title>
-    
-    <!-- OpenLayers CSS -->
+    <title>WebGIS - نقشه</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
-    
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="map-page">
-    
+<body>
     <!-- Header -->
-    <header class="map-header">
-        <div class="header-content">
-            <div class="header-left">
-                <div class="logo">🗺️</div>
-                <h1>سامانه WebGIS</h1>
-            </div>
-            
-            <div class="header-right">
-                <div class="user-info">
-                    <span class="user-icon">👤</span>
-                    <span class="user-name">{{ username }}</span>
-                    {% if email %}
-                    <span class="user-email">{{ email }}</span>
-                    {% endif %}
-                </div>
-                <a href="{{ url_for('logout') }}" class="btn btn-logout">
-                    <span>خروج</span>
-                    <span class="btn-icon">🚪</span>
-                </a>
-            </div>
-        </div>
-    </header>
-    
-    <!-- Main Content -->
-    <div class="map-content">
-        
-        <!-- Map Container -->
-        <div id="map" class="map-container"></div>
-        
-        <!-- Feature Info Panel -->
-        <div class="info-panel">
-            <div class="panel-header">
-                <h3>
-                    <span class="panel-icon">📍</span>
-                    اطلاعات عارضه
-                </h3>
-                <button id="closePanel" class="btn-close" style="display: none;">✕</button>
-            </div>
-            
-            <div id="featureInfo" class="panel-content">
-                <div class="info-placeholder">
-                    <div class="placeholder-icon">🖱️</div>
-                    <p>روی نقشه کلیک کنید</p>
-                    <small>اطلاعات عارضه در این بخش نمایش داده می‌شود</small>
-                </div>
-            </div>
-        </div>
-        
-    </div>
-    
-    <!-- Map Controls Legend -->
-    <div class="map-legend">
-        <div class="legend-item">
-            <span class="legend-icon">🗺️</span>
-            <span class="legend-text">لایه پایه: OpenStreetMap</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-icon">🌍</span>
-            <span class="legend-text">لایه WMS: GeoServer</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-icon">ℹ️</span>
-            <span class="legend-text">کلیک برای GetFeatureInfo</span>
+    <div class="map-header">
+        <h2>🌍 سامانه WebGIS</h2>
+        <div class="user-info">
+            <span>👤 {{ username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn-primary" style="padding: 8px 20px; text-decoration: none;">خروج</a>
         </div>
     </div>
-    
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>در حال دریافت اطلاعات...</p>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- Toolbar (Right Side) -->
+    <div class="toolbar">
+        <h4>🛠️ ابزارها</h4>
+        
+        <div class="tool-group">
+            <h5>📏 اندازه‌گیری</h5>
+            <button onclick="measureDistance()">📐 اندازه‌گیری فاصله</button>
+            <button onclick="measureArea()">📊 اندازه‌گیری مساحت</button>
+            <button onclick="clearMeasure()" class="clear-btn">🗑️ پاک کردن اندازه‌گیری</button>
+        </div>
+
+        <div class="tool-group">
+            <h5>✏️ رسم</h5>
+            <button onclick="drawPoint()">📍 نقطه</button>
+            <button onclick="drawLine()">📏 خط</button>
+            <button onclick="drawPolygon()">⬟ چندضلعی</button>
+            <button onclick="clearDrawing()" class="clear-btn">🗑️ پاک کردن رسم</button>
+        </div>
+
+        <div class="tool-group">
+            <h5>🧭 ناوبری</h5>
+            <button onclick="gotoXY()">🎯 GoTo XY</button>
+        </div>
+
+        <div class="tool-group">
+            <h5>💾 خروجی</h5>
+            <button onclick="exportPNG()">🖼️ Export PNG</button>
+            <button onclick="printMap()">🖨️ Print</button>
+        </div>
     </div>
-    
-    <!-- OpenLayers Library -->
+
+    <!-- Layer Panel (Left Side) -->
+    <div class="layer-panel">
+        <h4>🗺️ لایه‌های پایه</h4>
+        <button onclick="switchBaseLayer('OpenStreetMap')">🗺️ نقشه استاندارد</button>
+        <button onclick="switchBaseLayer('Satellite')">🛰️ تصویر ماهواره‌ای</button>
+        <button onclick="switchBaseLayer('Dark Mode')">🌙 حالت تاریک</button>
+        <button onclick="switchBaseLayer('Terrain')">⛰️ توپوگرافی</button>
+    </div>
+
+    <!-- Info Panel (Bottom Left) -->
+    <div id="info-panel">
+        <button class="close-info" onclick="closeInfo()">✕</button>
+        <div id="info-content"></div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
-    
-    <!-- Custom Map Script -->
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
-    
 </body>
 </html>
