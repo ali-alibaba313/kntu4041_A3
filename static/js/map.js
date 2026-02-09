@@ -8,6 +8,9 @@ let routingControl = null;
 let heatmapLayer = null;
 let geoserverLayer = null;
 let sidebarVisible = true;
+let routingMode = false;
+let routingPoints = [];
+let routingMarkers = [];
 
 // ==================== مقداردهی اولیه نقشه ====================
 function initMap() {
@@ -35,9 +38,9 @@ function initMap() {
 
     // کنترل لایه‌ها
     const baseMaps = {
-        "نقشه استاندارد": osmLayer,
-        "تصویر ماهواره‌ای": satelliteLayer,
-        "توپوگرافی": topoLayer
+        "🗺️ نقشه استاندارد": osmLayer,
+        "🛰️ تصویر ماهواره‌ای": satelliteLayer,
+        "⛰️ توپوگرافی": topoLayer
     };
 
     L.control.layers(baseMaps).addTo(map);
@@ -93,6 +96,13 @@ function initMap() {
 
     // نمایش مختصات با کلیک
     map.on('click', function(e) {
+        // اگر در حالت مسیریابی باشیم
+        if (routingMode) {
+            handleRoutingClick(e);
+            return;
+        }
+        
+        // نمایش عادی مختصات
         const coords = `عرض: ${e.latlng.lat.toFixed(6)}, طول: ${e.latlng.lng.toFixed(6)}`;
         L.popup()
             .setLatLng(e.latlng)
@@ -113,7 +123,6 @@ function getPolylineLength(layer) {
 
 // ==================== 1. تعویض نقشه پایه ====================
 function changeBasemap(type) {
-    // این تابع با control.layers جایگزین شده
     alert('از منوی لایه‌ها در گوشه راست بالا استفاده کنید');
 }
 
@@ -203,31 +212,100 @@ function calculateIntersection() {
     }
 }
 
-// ==================== 5. مسیریابی (Routing) ====================
-function calculateRoute() {
-    const start = prompt('مختصات مبدأ (lat,lng):', '35.6892,51.3890');
-    const end = prompt('مختصات مقصد (lat,lng):', '35.7219,51.4114');
+// ==================== 5. مسیریابی (Routing) - نسخه بهبود یافته ====================
+function startRouting() {
+    if (routingMode) {
+        // اگر در حالت مسیریابی باشیم، آن را لغو کن
+        cancelRouting();
+        alert('حالت مسیریابی لغو شد');
+        return;
+    }
     
-    if (!start || !end) return;
+    // فعال کردن حالت مسیریابی
+    routingMode = true;
+    routingPoints = [];
+    routingMarkers = [];
+    
+    // تغییر استایل ماوس
+    document.getElementById('map').style.cursor = 'crosshair';
+    
+    alert('✅ حالت مسیریابی فعال شد!\n\n1️⃣ مبدأ را روی نقشه کلیک کنید\n2️⃣ سپس مقصد را کلیک کنید\n\n❌ برای لغو، دوباره روی دکمه کلیک کنید');
+}
 
-    const [startLat, startLng] = start.split(',').map(Number);
-    const [endLat, endLng] = end.split(',').map(Number);
+function handleRoutingClick(e) {
+    const latlng = e.latlng;
+    
+    // اضافه کردن marker آبی
+    const marker = L.marker(latlng, {
+        icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        })
+    }).addTo(map);
+    
+    const popupText = routingPoints.length === 0 ? '🚀 مبدأ' : '🎯 مقصد';
+    marker.bindPopup(popupText).openPopup();
+    
+    routingPoints.push(latlng);
+    routingMarkers.push(marker);
+    
+    // اگر دو نقطه انتخاب شد، مسیریابی را انجام بده
+    if (routingPoints.length === 2) {
+        calculateRouteFromPoints();
+    } else {
+        alert('✅ مبدأ انتخاب شد!\n\n🎯 حالا مقصد را روی نقشه کلیک کنید');
+    }
+}
 
+function calculateRouteFromPoints() {
+    if (routingPoints.length < 2) {
+        alert('لطفاً ابتدا مبدأ و مقصد را مشخص کنید');
+        return;
+    }
+
+    // حذف routing قبلی در صورت وجود
     if (routingControl) {
         map.removeControl(routingControl);
     }
 
+    // ایجاد مسیریابی جدید
     routingControl = L.Routing.control({
         waypoints: [
-            L.latLng(startLat, startLng),
-            L.latLng(endLat, endLng)
+            routingPoints[0],
+            routingPoints[1]
         ],
         routeWhileDragging: true,
         language: 'fa',
         lineOptions: {
-            styles: [{ color: 'blue', weight: 6 }]
-        }
+            styles: [{ color: '#0066ff', weight: 6, opacity: 0.8 }]
+        },
+        createMarker: function() { return null; }, // استفاده از markerهای خودمون
+        show: true,
+        collapsible: true
     }).addTo(map);
+
+    // بستن حالت مسیریابی
+    routingMode = false;
+    document.getElementById('map').style.cursor = '';
+    
+    alert('✅ مسیر با موفقیت محاسبه شد!\n\n🔄 برای مسیریابی جدید، دوباره روی دکمه کلیک کنید');
+}
+
+function cancelRouting() {
+    routingMode = false;
+    document.getElementById('map').style.cursor = '';
+    
+    // حذف markerها
+    routingMarkers.forEach(marker => {
+        map.removeLayer(marker);
+    });
+    
+    routingPoints = [];
+    routingMarkers = [];
 }
 
 // ==================== 6. نقشه حرارتی (Heatmap) ====================
@@ -331,6 +409,21 @@ function loadGeoServerLayer() {
 function clearDrawings() {
     if (confirm('آیا مطمئن هستید که می‌خواهید تمام رسم‌ها پاک شوند؟')) {
         drawnItems.clearLayers();
+        
+        // حذف routing
+        if (routingControl) {
+            map.removeControl(routingControl);
+            routingControl = null;
+        }
+        
+        // حذف markerهای مسیریابی
+        routingMarkers.forEach(marker => {
+            map.removeLayer(marker);
+        });
+        routingMarkers = [];
+        routingPoints = [];
+        routingMode = false;
+        document.getElementById('map').style.cursor = '';
     }
 }
 
