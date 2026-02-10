@@ -343,9 +343,6 @@ startup.bat   # Windows
 ### صفحه ورود
 ![Login Page](screenshots/login.JPG)
 
-
-
-
 ### صفحه ثبت‌نام
 ![Register Page](screenshots/register.JPG)
 
