@@ -1,450 +1,335 @@
-// ==================== متغیرهای سراسری ====================
-let map;
-let drawControl;
-let drawnItems = new L.FeatureGroup();
-let currentBasemap = 'osm';
-let measureControl;
-let routingControl = null;
-let heatmapLayer = null;
-let geoserverLayer = null;
-let sidebarVisible = true;
-let routingMode = false;
-let routingPoints = [];
-let routingMarkers = [];
+// ========================================
+// 🗺️ راه‌اندازی نقشه
+// ========================================
+var map = L.map('map').setView([35.6892, 51.3890], 11);
 
-// ==================== مقداردهی اولیه نقشه ====================
-function initMap() {
-    // ایجاد نقشه با مرکز تهران
-    map = L.map('map').setView([35.6892, 51.3890], 11);
+// لایه پایه OSM
+var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+}).addTo(map);
 
-    // لایه‌های پایه
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    });
+// لایه تصویر ماهواره‌ای (Esri)
+var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri'
+});
 
-    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri',
-        maxZoom: 19
-    });
+// لایه توپوگرافی
+var topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenTopoMap contributors'
+});
 
-    const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenTopoMap contributors',
-        maxZoom: 17
-    });
+// ========================================
+// 🌐 لایه‌های WMS از GeoServer
+// ========================================
+var wmsLayers = {};
 
-    // افزودن لایه پیش‌فرض
-    osmLayer.addTo(map);
+// ۱. لایه پلی‌گونی عراق (مرزها)
+var iraqPoly = L.tileLayer.wms('https://ahocevar.com/geoserver/wms', {
+    layers: 'ne:ne_10m_admin_0_countries',
+    format: 'image/png',
+    transparent: true,
+    cql_filter: "name='Iraq'",
+    attribution: 'Natural Earth'
+});
 
-    // کنترل لایه‌ها
-    const baseMaps = {
-        "🗺️ نقشه استاندارد": osmLayer,
-        "🛰️ تصویر ماهواره‌ای": satelliteLayer,
-        "⛰️ توپوگرافی": topoLayer
-    };
 
-    L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);
 
-    // افزودن drawnItems به نقشه
-    map.addLayer(drawnItems);
+wmsLayers['مرزهای عراق (پلی‌گون)'] = iraqPoly;
 
-    // افزودن کنترل رسم
-    drawControl = new L.Control.Draw({
-        edit: {
-            featureGroup: drawnItems,
-            remove: true
+
+// ========================================
+// 🎛️ Layer Control
+// ========================================
+var baseLayers = {
+    "OpenStreetMap": osmLayer,
+    "Satellite": satelliteLayer,      
+    "Topography": topoLayer   
+};
+
+var overlayLayers = {
+    "مرزهای عراق (پلی‌گون)": iraqPoly
+   
+};
+
+var layerControl = L.control.layers(baseLayers, overlayLayers, {
+    position: 'bottomright',
+    collapsed: false
+}).addTo(map);
+
+// ========================================
+// ✏️ ابزارهای رسم (Draw Control)
+// ========================================
+var drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+var drawControl = new L.Control.Draw({
+    position: 'topleft',
+    draw: {
+        polygon: {
+            allowIntersection: false,
+            showArea: true
         },
-        draw: {
-            polygon: true,
-            polyline: true,
-            rectangle: true,
-            circle: true,
-            marker: true,
-            circlemarker: false
+        polyline: true,
+        rectangle: true,
+        circle: true,
+        marker: true,
+        circlemarker: {
+            radius: 4  
         }
-    });
-    map.addControl(drawControl);
-
-    // رویداد رسم شکل جدید
-    map.on(L.Draw.Event.CREATED, function (event) {
-        const layer = event.layer;
-        drawnItems.addLayer(layer);
-        
-        // محاسبه مساحت برای polygon و rectangle
-        if (event.layerType === 'polygon' || event.layerType === 'rectangle') {
-            const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-            const areaInHectares = (area / 10000).toFixed(2);
-            layer.bindPopup(`مساحت: ${areaInHectares} هکتار`).openPopup();
-        }
-        
-        // محاسبه طول برای polyline
-        if (event.layerType === 'polyline') {
-            const length = getPolylineLength(layer);
-            layer.bindPopup(`طول: ${length.toFixed(2)} کیلومتر`).openPopup();
-        }
-    });
-
-    // اضافه کردن کنترل مختصات
-    L.control.coordinates({
-        position: "bottomleft",
-        decimals: 6,
-        decimalSeperator: ".",
-        labelTemplateLat: "عرض: {y}",
-        labelTemplateLng: "طول: {x}",
-        useLatLngOrder: true
-    }).addTo(map);
-
-    // نمایش مختصات با کلیک
-    map.on('click', function(e) {
-        // اگر در حالت مسیریابی باشیم
-        if (routingMode) {
-            handleRoutingClick(e);
-            return;
-        }
-        
-        // نمایش عادی مختصات
-        const coords = `عرض: ${e.latlng.lat.toFixed(6)}, طول: ${e.latlng.lng.toFixed(6)}`;
-        L.popup()
-            .setLatLng(e.latlng)
-            .setContent(coords)
-            .openOn(map);
-    });
-}
-
-// ==================== توابع کمکی ====================
-function getPolylineLength(layer) {
-    const latlngs = layer.getLatLngs();
-    let length = 0;
-    for (let i = 0; i < latlngs.length - 1; i++) {
-        length += latlngs[i].distanceTo(latlngs[i + 1]);
+    },
+    edit: {
+        featureGroup: drawnItems,
+        remove: true
     }
-    return length / 1000; // تبدیل به کیلومتر
+});
+map.addControl(drawControl);
+
+map.on(L.Draw.Event.CREATED, function (event) {
+    var layer = event.layer;
+    drawnItems.addLayer(layer);
+});
+
+// ========================================
+// 🗑️ پاک کردن رسم‌ها
+// ========================================
+function clearDrawnItems() {
+    drawnItems.clearLayers();
 }
 
-// ==================== 1. تعویض نقشه پایه ====================
-function changeBasemap(type) {
-    alert('از منوی لایه‌ها در گوشه راست پائین استفاده کنید');
+// ========================================
+// 📋 منوی کشویی (Toolbar)
+// ========================================
+function toggleMenu() {
+    var menu = document.getElementById('dropdown-menu');
+    menu.classList.toggle('show');
 }
 
-// ==================== 2. اندازه‌گیری مسافت ====================
-function toggleMeasure() {
-    if (measureControl) {
-        map.removeControl(measureControl);
-        measureControl = null;
-    } else {
-        measureControl = L.control.measure({
-            position: 'topleft',
-            primaryLengthUnit: 'kilometers',
-            secondaryLengthUnit: 'meters',
-            primaryAreaUnit: 'hectares',
-            secondaryAreaUnit: 'sqmeters',
-            activeColor: '#ff0000',
-            completedColor: '#0066ff'
-        });
-        measureControl.addTo(map);
+// بستن منو با کلیک بیرون
+window.onclick = function(event) {
+    if (!event.target.matches('.menu-btn')) {
+        var menu = document.getElementById('dropdown-menu');
+        if (menu.classList.contains('show')) {
+            menu.classList.remove('show');
+        }
     }
 }
 
-// ==================== 3. Buffer (حریم) ====================
-function createBuffer() {
-    if (drawnItems.getLayers().length === 0) {
-        alert('ابتدا یک شکل روی نقشه رسم کنید');
-        return;
-    }
+// ========================================
+// ➕ افزودن لایه WMS از GeoServer
+// ========================================
+function showAddLayerDialog() {
+    document.getElementById('add-layer-dialog').style.display = 'flex';
+}
 
-    const distance = prompt('فاصله buffer را به متر وارد کنید:', '1000');
-    if (!distance) return;
+function closeAddLayerDialog() {
+    document.getElementById('add-layer-dialog').style.display = 'none';
+}
 
-    const lastLayer = drawnItems.getLayers()[drawnItems.getLayers().length - 1];
+function addCustomWMSLayer() {
+    var wmsUrl = document.getElementById('wms-url').value.trim();
+    var layerName = document.getElementById('layer-name').value.trim();
+    var displayName = document.getElementById('layer-display-name').value.trim() || layerName;
     
-    try {
-        let buffered;
-        if (lastLayer instanceof L.Marker) {
-            const latlng = lastLayer.getLatLng();
-            buffered = L.circle(latlng, {
-                radius: parseFloat(distance),
-                color: 'blue',
-                fillColor: '#30f',
-                fillOpacity: 0.3
-            });
-        } else {
-            const turfPoly = turf.polygon([lastLayer.getLatLngs()[0].map(ll => [ll.lng, ll.lat])]);
-            const bufferedPoly = turf.buffer(turfPoly, parseFloat(distance) / 1000, { units: 'kilometers' });
-            buffered = L.geoJSON(bufferedPoly, {
-                style: { color: 'blue', fillColor: '#30f', fillOpacity: 0.3 }
-            });
-        }
-        
-        buffered.addTo(map);
-        drawnItems.addLayer(buffered);
-        alert(`Buffer ${distance} متری ایجاد شد`);
-    } catch (error) {
-        alert('خطا در ایجاد buffer: ' + error.message);
-    }
-}
-
-// ==================== 4. تقاطع (Intersection) ====================
-function calculateIntersection() {
-    const layers = drawnItems.getLayers();
-    if (layers.length < 2) {
-        alert('برای محاسبه تقاطع حداقل 2 شکل نیاز است');
-        return;
-    }
-
-    try {
-        const poly1 = turf.polygon([layers[layers.length - 1].getLatLngs()[0].map(ll => [ll.lng, ll.lat])]);
-        const poly2 = turf.polygon([layers[layers.length - 2].getLatLngs()[0].map(ll => [ll.lng, ll.lat])]);
-        
-        const intersection = turf.intersect(poly1, poly2);
-        
-        if (intersection) {
-            const intersectLayer = L.geoJSON(intersection, {
-                style: { color: 'red', fillColor: '#f03', fillOpacity: 0.5 }
-            });
-            intersectLayer.addTo(map);
-            drawnItems.addLayer(intersectLayer);
-            alert('تقاطع محاسبه شد');
-        } else {
-            alert('این دو شکل تقاطعی ندارند');
-        }
-    } catch (error) {
-        alert('خطا در محاسبه تقاطع: ' + error.message);
-    }
-}
-
-// ==================== 5. مسیریابی (Routing) - نسخه بهبود یافته ====================
-function startRouting() {
-    if (routingMode) {
-        // اگر در حالت مسیریابی باشیم، آن را لغو کن
-        cancelRouting();
-        alert('حالت مسیریابی لغو شد');
+    if (!wmsUrl || !layerName) {
+        alert('لطفاً آدرس WMS و نام لایه را وارد کنید');
         return;
     }
     
-    // فعال کردن حالت مسیریابی
-    routingMode = true;
-    routingPoints = [];
-    routingMarkers = [];
-    
-    // تغییر استایل ماوس
-    document.getElementById('map').style.cursor = 'crosshair';
-    
-    alert('✅ حالت مسیریابی فعال شد!\n\n1️⃣ مبدأ را روی نقشه کلیک کنید\n2️⃣ سپس مقصد را کلیک کنید\n\n❌ برای لغو، دوباره روی دکمه کلیک کنید');
-}
-
-function handleRoutingClick(e) {
-    const latlng = e.latlng;
-    
-    // اضافه کردن marker آبی
-    const marker = L.marker(latlng, {
-        icon: L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        })
-    }).addTo(map);
-    
-    const popupText = routingPoints.length === 0 ? '🚀 مبدأ' : '🎯 مقصد';
-    marker.bindPopup(popupText).openPopup();
-    
-    routingPoints.push(latlng);
-    routingMarkers.push(marker);
-    
-    // اگر دو نقطه انتخاب شد، مسیریابی را انجام بده
-    if (routingPoints.length === 2) {
-        calculateRouteFromPoints();
-    } else {
-        alert('✅ مبدأ انتخاب شد!\n\n🎯 حالا مقصد را روی نقشه کلیک کنید');
-    }
-}
-
-function calculateRouteFromPoints() {
-    if (routingPoints.length < 2) {
-        alert('لطفاً ابتدا مبدأ و مقصد را مشخص کنید');
-        return;
-    }
-
-    // حذف routing قبلی در صورت وجود
-    if (routingControl) {
-        map.removeControl(routingControl);
-    }
-
-    // ایجاد مسیریابی جدید
-    routingControl = L.Routing.control({
-        waypoints: [
-            routingPoints[0],
-            routingPoints[1]
-        ],
-        routeWhileDragging: true,
-        language: 'fa',
-        lineOptions: {
-            styles: [{ color: '#0066ff', weight: 6, opacity: 0.8 }]
-        },
-        createMarker: function() { return null; }, // استفاده از markerهای خودمون
-        show: true,
-        collapsible: true
-    }).addTo(map);
-
-    // بستن حالت مسیریابی
-    routingMode = false;
-    document.getElementById('map').style.cursor = '';
-    
-    alert('✅ مسیر با موفقیت محاسبه شد!\n\n🔄 برای مسیریابی جدید، دوباره روی دکمه کلیک کنید');
-}
-
-function cancelRouting() {
-    routingMode = false;
-    document.getElementById('map').style.cursor = '';
-    
-    // حذف markerها
-    routingMarkers.forEach(marker => {
-        map.removeLayer(marker);
-    });
-    
-    routingPoints = [];
-    routingMarkers = [];
-}
-
-// ==================== 6. نقشه حرارتی (Heatmap) ====================
-function toggleHeatmap() {
-    if (heatmapLayer) {
-        map.removeLayer(heatmapLayer);
-        heatmapLayer = null;
-        return;
-    }
-
-    // نقاط تصادفی برای نمایش
-    const points = [];
-    for (let i = 0; i < 100; i++) {
-        points.push([
-            35.6892 + (Math.random() - 0.5) * 0.1,
-            51.3890 + (Math.random() - 0.5) * 0.1,
-            Math.random()
-        ]);
-    }
-
-    heatmapLayer = L.heatLayer(points, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 17
-    }).addTo(map);
-}
-
-// ==================== 7. چاپ نقشه ====================
-function printMap() {
-    window.print();
-}
-
-// ==================== 8. Export GeoJSON ====================
-function exportGeoJSON() {
-    if (drawnItems.getLayers().length === 0) {
-        alert('هیچ شکلی برای export وجود ندارد');
-        return;
-    }
-
-    const data = drawnItems.toGeoJSON();
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'map_data.geojson';
-    link.click();
-}
-
-// ==================== 9. Import GeoJSON ====================
-function importGeoJSON() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.geojson,.json';
-    
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = function(event) {
-            try {
-                const geojson = JSON.parse(event.target.result);
-                const layer = L.geoJSON(geojson);
-                layer.eachLayer(function(l) {
-                    drawnItems.addLayer(l);
-                });
-                map.fitBounds(layer.getBounds());
-                alert('فایل با موفقیت بارگذاری شد');
-            } catch (error) {
-                alert('خطا در خواندن فایل: ' + error.message);
-            }
-        };
-        
-        reader.readAsText(file);
-    };
-    
-    input.click();
-}
-
-// ==================== 10. بارگذاری لایه از GeoServer ====================
-function loadGeoServerLayer() {
-    const layerName = prompt('نام لایه در GeoServer:', 'topp:states');
-    if (!layerName) return;
-
-    if (geoserverLayer) {
-        map.removeLayer(geoserverLayer);
-    }
-
-    geoserverLayer = L.tileLayer.wms('/geoserver/wms', {
+    // ساخت لایه WMS جدید
+    var newWMSLayer = L.tileLayer.wms(wmsUrl, {
         layers: layerName,
         format: 'image/png',
         transparent: true,
         attribution: 'GeoServer'
-    }).addTo(map);
+    });
     
-    alert(`لایه ${layerName} بارگذاری شد`);
+    // افزودن به نقشه
+    newWMSLayer.addTo(map);
+    
+    // افزودن به Layer Control
+    layerControl.addOverlay(newWMSLayer, displayName);
+    
+    // ذخیره در لیست
+    wmsLayers[displayName] = newWMSLayer;
+    
+    // بستن دیالوگ و پاک کردن فرم
+    closeAddLayerDialog();
+    document.getElementById('layer-name').value = '';
+    document.getElementById('layer-display-name').value = '';
+    
+    alert('✅ لایه "' + displayName + '" با موفقیت اضافه شد');
 }
 
-// ==================== پاک کردن تمام رسم‌ها ====================
-function clearDrawings() {
-    if (confirm('آیا مطمئن هستید که می‌خواهید تمام رسم‌ها پاک شوند؟')) {
-        drawnItems.clearLayers();
-        
-        // حذف routing
-        if (routingControl) {
-            map.removeControl(routingControl);
-            routingControl = null;
-        }
-        
-        // حذف markerهای مسیریابی
-        routingMarkers.forEach(marker => {
-            map.removeLayer(marker);
-        });
-        routingMarkers = [];
-        routingPoints = [];
-        routingMode = false;
-        document.getElementById('map').style.cursor = '';
-    }
-}
+// ========================================
+// 🔍 حالت Identify (GetFeatureInfo)
+// ========================================
+var identifyMode = false; // آیا ابزار Identify فعال است؟
 
-// ==================== کنترل Sidebar ====================
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleBtn');
+// تابع فعال/غیرفعال کردن Identify
+function toggleIdentify() {
+    identifyMode = !identifyMode;
     
-    if (sidebarVisible) {
-        sidebar.style.right = '-320px';
-        toggleBtn.innerHTML = '☰ ابزارها';
-        toggleBtn.style.right = '10px';
+    var btn = document.getElementById('identify-btn');
+    
+    if (identifyMode) {
+        btn.classList.add('active');
+        map.getContainer().style.cursor = 'help'; // تغییر نشانگر موس
+        document.getElementById('feature-info-content').innerHTML = 
+            '<p class="hint">🔍 روی یک لایه وکتوری کلیک کنید</p>';
+        document.getElementById('feature-info-panel').classList.add('show');
     } else {
-        sidebar.style.right = '0';
-        toggleBtn.innerHTML = '✖ بستن';
-        toggleBtn.style.right = '330px';
+        btn.classList.remove('active');
+        map.getContainer().style.cursor = ''; // برگشت به حالت عادی
+        closeFeatureInfo();
     }
-    sidebarVisible = !sidebarVisible;
 }
 
-// ==================== شروع برنامه ====================
-document.addEventListener('DOMContentLoaded', function() {
-    initMap();
+// ========================================
+// 🖱️ رویداد کلیک روی نقشه (فقط در حالت Identify)
+// ========================================
+map.on('click', function(e) {
+    // اگر Identify فعال نیست، هیچ کاری نکن
+    if (!identifyMode) {
+        return;
+    }
+    
+    var activeWMSLayers = [];
+    
+    // پیدا کردن لایه‌های WMS فعال
+    map.eachLayer(function(layer) {
+        if (layer.wmsParams) {
+            activeWMSLayers.push(layer);
+        }
+    });
+    
+    // اگر هیچ لایه WMS فعال نیست
+    if (activeWMSLayers.length === 0) {
+        document.getElementById('feature-info-content').innerHTML = 
+            '<p class="error">⚠️ لطفاً ابتدا یک لایه وکتوری را فعال کنید</p>';
+        document.getElementById('feature-info-panel').classList.add('show');
+        return;
+    }
+    
+    // برای اولین لایه WMS فعال درخواست بفرست
+    var wmsLayer = activeWMSLayers[0];
+    var latlng = e.latlng;
+    
+    // ساخت URL برای GetFeatureInfo
+    var point = map.latLngToContainerPoint(latlng);
+    var size = map.getSize();
+    var bounds = map.getBounds();
+    var sw = bounds.getSouthWest();
+    var ne = bounds.getNorthEast();
+    
+    var params = {
+        request: 'GetFeatureInfo',
+        service: 'WMS',
+        version: '1.1.1',
+        layers: wmsLayer.wmsParams.layers,
+        query_layers: wmsLayer.wmsParams.layers,
+        styles: '',
+        bbox: sw.lng + ',' + sw.lat + ',' + ne.lng + ',' + ne.lat,
+        height: size.y,
+        width: size.x,
+        srs: 'EPSG:4326',
+        format: 'image/png',
+        info_format: 'application/json',
+        x: Math.floor(point.x),
+        y: Math.floor(point.y)
+    };
+    
+    var url = wmsLayer._url + L.Util.getParamString(params, wmsLayer._url);
+    
+    // نمایش لودینگ
+    document.getElementById('feature-info-content').innerHTML = 
+        '<p class="hint">⏳ در حال دریافت اطلاعات...</p>';
+    document.getElementById('feature-info-panel').classList.add('show');
+    
+    // استفاده از Proxy برای دور زدن CORS
+    var proxyUrl = '/api/geoserver-proxy?url=' + encodeURIComponent(url);
+    
+    fetch(proxyUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('خطا در ارتباط با Proxy');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('پاسخ GetFeatureInfo:', data);
+            displayFeatureInfo(data);
+        })
+        .catch(error => {
+            console.error('خطا در Proxy:', error);
+            document.getElementById('feature-info-content').innerHTML = 
+                '<p class="error">⚠️ خطا در دریافت اطلاعات از سرور<br>' +
+                'لطفاً مطمئن شوید GeoServer روشن است و لایه مورد نظر در دسترس است.</p>';
+        });
 });
+
+// ========================================
+// 📊 نمایش اطلاعات عارضه در Panel
+// ========================================
+function displayFeatureInfo(data) {
+    var panel = document.getElementById('feature-info-panel');
+    var content = document.getElementById('feature-info-content');
+    
+    console.log('داده دریافت شده:', data);
+    
+    // بررسی ساختار داده
+    if (!data || (!data.features && !data.properties)) {
+        content.innerHTML = '<p class="hint">⚠️ هیچ عارضه‌ای در این نقطه یافت نشد.<br>لطفاً روی یک لایه وکتوری کلیک کنید.</p>';
+        panel.classList.add('show');
+        return;
+    }
+    
+    var properties = null;
+    
+    // شناسایی نوع پاسخ
+    if (data.features && data.features.length > 0) {
+        // فرمت GeoJSON استاندارد
+        properties = data.features[0].properties;
+    } else if (data.properties) {
+        // فرمت مستقیم properties
+        properties = data.properties;
+    }
+    
+    if (!properties || Object.keys(properties).length === 0) {
+        content.innerHTML = '<p class="hint">⚠️ هیچ اطلاعاتی برای این عارضه یافت نشد.</p>';
+        panel.classList.add('show');
+        return;
+    }
+    
+    var html = '<table class="feature-table">';
+    html += '<thead><tr><th>ویژگی</th><th>مقدار</th></tr></thead>';
+    html += '<tbody>';
+    
+    for (var key in properties) {
+        if (properties.hasOwnProperty(key)) {
+            var value = properties[key];
+            
+            // تبدیل مقادیر null/undefined به خط تیره
+            if (value === null || value === undefined || value === '') {
+                value = '-';
+            }
+            
+            html += '<tr>';
+            html += '<td><strong>' + key + '</strong></td>';
+            html += '<td>' + value + '</td>';
+            html += '</tr>';
+        }
+    }
+    
+    html += '</tbody></table>';
+    
+    content.innerHTML = html;
+    panel.classList.add('show');
+}
+
+// ========================================
+// ❌ بستن Feature Info Panel
+// ========================================
+function closeFeatureInfo() {
+    document.getElementById('feature-info-panel').classList.remove('show');
+}

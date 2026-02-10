@@ -5,6 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ثبت‌نام</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .password-strength {
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .strength-weak { color: #f44336; }
+        .strength-medium { color: #ff9800; }
+        .strength-strong { color: #4caf50; }
+        
+        .password-rules {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .password-rules strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .password-rules ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .password-rules li {
+            margin: 6px 0;
+            padding-right: 5px;
+            transition: all 0.3s ease;
+        }
+        .rule-valid { 
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .rule-invalid { 
+            color: #999;
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .username-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <div class="auth-container">
@@ -19,18 +73,49 @@
                 {% endif %}
             {% endwith %}
             
-            <form method="POST" action="{{ url_for('register') }}">
+            <form method="POST" action="{{ url_for('register') }}" autocomplete="off" id="registerForm">
                 <div class="form-group">
                     <label for="username">نام کاربری</label>
-                    <input type="text" id="username" name="username" required minlength="3">
+                    <input type="text" 
+                           id="username" 
+                           name="username" 
+                           required 
+                           minlength="3"
+                           maxlength="20"
+                           pattern="[a-zA-Z0-9_]+"
+                           autocomplete="off"
+                           readonly 
+                           onfocus="this.removeAttribute('readonly');"
+                           placeholder="حداقل ۳ کاراکتر">
+                    <small class="username-hint">⚠️ فقط حروف انگلیسی، اعداد و _ مجاز است (۳ تا ۲۰ کاراکتر)</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="password">رمز عبور</label>
-                    <input type="password" id="password" name="password" required minlength="4">
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           required 
+                           minlength="8"
+                           autocomplete="new-password"
+                           readonly 
+                           onfocus="this.removeAttribute('readonly');"
+                           placeholder="حداقل ۸ کاراکتر">
+                    <div id="passwordStrength" class="password-strength"></div>
+                    
+                    <div class="password-rules">
+                        <strong>📋 الزامات رمز عبور:</strong>
+                        <ul id="passwordRules">
+                            <li id="rule-length" class="rule-invalid">✗ حداقل ۸ کاراکتر</li>
+                            <li id="rule-upper" class="rule-invalid">✗ حداقل یک حرف بزرگ (A-Z)</li>
+                            <li id="rule-lower" class="rule-invalid">✗ حداقل یک حرف کوچک (a-z)</li>
+                            <li id="rule-number" class="rule-invalid">✗ حداقل یک عدد (0-9)</li>
+                            <li id="rule-special" class="rule-invalid">✗ حداقل یک کاراکتر خاص (@#$%^&*...)</li>
+                        </ul>
+                    </div>
                 </div>
                 
-                <button type="submit" class="btn-primary">ثبت‌نام</button>
+                <button type="submit" class="btn-primary" id="submitBtn" disabled>ثبت‌نام</button>
             </form>
             
             <div class="auth-links">
@@ -38,5 +123,99 @@
             </div>
         </div>
     </div>
+
+    <script>
+        const passwordInput = document.getElementById('password');
+        const strengthDiv = document.getElementById('passwordStrength');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        const rules = {
+            length: { 
+                regex: /.{8,}/, 
+                element: document.getElementById('rule-length'),
+                text: 'حداقل ۸ کاراکتر'
+            },
+            upper: { 
+                regex: /[A-Z]/, 
+                element: document.getElementById('rule-upper'),
+                text: 'حداقل یک حرف بزرگ (A-Z)'
+            },
+            lower: { 
+                regex: /[a-z]/, 
+                element: document.getElementById('rule-lower'),
+                text: 'حداقل یک حرف کوچک (a-z)'
+            },
+            number: { 
+                regex: /[0-9]/, 
+                element: document.getElementById('rule-number'),
+                text: 'حداقل یک عدد (0-9)'
+            },
+            special: { 
+                regex: /[@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 
+                element: document.getElementById('rule-special'),
+                text: 'حداقل یک کاراکتر خاص (@#$%^&*...)'
+            }
+        };
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let validCount = 0;
+            
+            // بررسی هر قانون
+            for (let key in rules) {
+                const rule = rules[key];
+                if (rule.regex.test(password)) {
+                    rule.element.className = 'rule-valid';
+                    rule.element.textContent = '✓ ' + rule.text;
+                    validCount++;
+                } else {
+                    rule.element.className = 'rule-invalid';
+                    rule.element.textContent = '✗ ' + rule.text;
+                }
+            }
+            
+            // نمایش قدرت پسورد
+            if (validCount === 5) {
+                strengthDiv.innerHTML = '<span class="strength-strong">🔒 پسورد قوی - عالیه!</span>';
+                submitBtn.disabled = false;
+            } else if (validCount >= 3) {
+                strengthDiv.innerHTML = '<span class="strength-medium">🔓 پسورد متوسط - باید تقویت بشه</span>';
+                submitBtn.disabled = true;
+            } else if (password.length > 0) {
+                strengthDiv.innerHTML = '<span class="strength-weak">⚠️ پسورد ضعیف - همه شرایط رو برآورده کن</span>';
+                submitBtn.disabled = true;
+            } else {
+                strengthDiv.innerHTML = '';
+                submitBtn.disabled = true;
+            }
+        });
+        
+        // اعتبارسنجی نهایی فرم
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = passwordInput.value;
+            const username = document.getElementById('username').value;
+            
+            // بررسی نام کاربری
+            if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                e.preventDefault();
+                alert('⚠️ نام کاربری فقط باید شامل حروف انگلیسی، اعداد و _ باشد (۳ تا ۲۰ کاراکتر)');
+                return;
+            }
+            
+            // بررسی تمام شرایط پسورد
+            let allValid = true;
+            for (let key in rules) {
+                if (!rules[key].regex.test(password)) {
+                    allValid = false;
+                    break;
+                }
+            }
+            
+            if (!allValid) {
+                e.preventDefault();
+                alert('⚠️ رمز عبور باید تمام الزامات را برآورده کند!');
+            }
+        });
+    </script>
 </body>
 </html>
