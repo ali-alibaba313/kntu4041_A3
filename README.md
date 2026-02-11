@@ -340,10 +340,10 @@ startup.bat   # Windows
 
 ## 📸 Screenshots
 
-![Login Page](./screenshots/login.jpg)
-![Register Page](./screenshots/register.jpg)
-![Map Page](./screenshots/map.jpg)
-![Feature Info](./screenshots/feature-info.jpg)
+![Login Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/login.jpg?raw=true)
+![Register Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/register.jpg?raw=true)
+![Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
+![Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
 
 
 با تشکر از استاد عزیز دکتر نظری
