@@ -306,5 +306,6 @@ print(os.urandom(24).hex())
 
 https://drive.google.com/file/d/0B9bklR0VFJxzejVhNDB3Z0VKUnc/view?usp=sharing&resourcekey=0-rsIBKTxGZyb6usVyGiZG6A
 
+اگر لینک ویدئو به هر عنوان کار نکرد داخل خود پروژه بارگذاری شده. روی آن کلیک کنید و در صفحه بعدی روی view raw کلیک کنید تاویدئو رو دانلود کنه.
 
 با تشکر از استاد عزیز دکتر نظری
