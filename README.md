@@ -218,16 +218,18 @@ Project demo video (Google Drive):
 https://drive.google.com/file/d/1toNZuBlS4KIBnledXDPe20GhbW_Specn/view
 
 Screenshots
-Login Page
+## Screenshots
 
-Register Page
+[Login Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/login.jpg?raw=true)
 
-Map Page
+[Register Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/register.jpg?raw=true)
 
-Feature Info
+[Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
 
-Additional Video
-https://drive.google.com/file/d/1QRev0Uz13_w4gdnsx2lhM8WCeEgQW9xY/view
+[Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
+
+
+[Additional Video](https://drive.google.com/file/d/1QRev0Uz13_w4gdnsx2lhM8WCeEgQW9xY/view)
 
 If the video link does not open correctly, the video is included in the project repository.
 
