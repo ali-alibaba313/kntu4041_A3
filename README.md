@@ -304,5 +304,7 @@ print(os.urandom(24).hex())
 ![Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
 ![Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
 
+https://drive.google.com/file/d/0B9bklR0VFJxzejVhNDB3Z0VKUnc/view?usp=sharing&resourcekey=0-rsIBKTxGZyb6usVyGiZG6A
+
 
 با تشکر از استاد عزیز دکتر نظری
