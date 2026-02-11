@@ -296,6 +296,7 @@ print(os.urandom(24).hex())
 - **GeoServer Demo Server** - سرویس WMS
 - **OGC WMS 1.1.1** - استاندارد نقشه
 
+👉 **[مشاهده ویدئو در Google Drive](https://drive.google.com/file/d/1toNZuBlS4KIBnledXDPe20GhbW_Specn/view)**
 
 
 ## 📸 Screenshots
@@ -304,7 +305,7 @@ print(os.urandom(24).hex())
 ![Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
 ![Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
 
-https://drive.google.com/file/d/0B9bklR0VFJxzejVhNDB3Z0VKUnc/view?usp=sharing&resourcekey=0-rsIBKTxGZyb6usVyGiZG6A
+https://drive.google.com/file/d/1QRev0Uz13_w4gdnsx2lhM8WCeEgQW9xY/view?usp=drive_link
 
 اگر لینک ویدئو به هر عنوان کار نکرد داخل خود پروژه بارگذاری شده. روی آن کلیک کنید و در صفحه بعدی روی view raw کلیک کنید تاویدئو رو دانلود کنه.
 
