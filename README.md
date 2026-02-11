@@ -338,18 +338,12 @@ startup.bat   # Windows
 
 ## 📸 اسکرین‌شات‌ها
 
-> **نکته:** اسکرین‌شات‌ها را در پوشه `screenshots/` قرار دهید
+## 📸 Screenshots
 
-### صفحه ورود
-![Login Page](screenshots/login.jpg)
+![Login Page](./screenshots/login.jpg)
+![Register Page](./screenshots/register.jpg)
+![Map Page](./screenshots/map.jpg)
+![Feature Info](./screenshots/feature-info.jpg)
 
-### صفحه ثبت‌نام
-![Register Page](screenshots/register.JPG)
-
-### صفحه نقشه
-![Map Page](screenshots/map.JPG)
-
-### GetFeatureInfo
-![Feature Info](screenshots/feature-info.JPG)
 
 با تشکر از استاد عزیز دکتر نظری
