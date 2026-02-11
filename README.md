@@ -341,7 +341,7 @@ startup.bat   # Windows
 > **نکته:** اسکرین‌شات‌ها را در پوشه `screenshots/` قرار دهید
 
 ### صفحه ورود
-![Login Page](screenshots/login.JPG)
+![Login Page](screenshots/login.jpg)
 
 ### صفحه ثبت‌نام
 ![Register Page](screenshots/register.JPG)
