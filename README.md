@@ -75,16 +75,20 @@ Before installation, ensure the following are installed:
 Screenshots
 ## Screenshots
 
+login page:
 ![Login Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/login.jpg?raw=true)
 
-[Register Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/register.jpg?raw=true)
+registeration page :
+![Register Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/register.jpg?raw=true)
 
-[Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
+map page: 
+![Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
 
-[Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
+feature Info:
+![Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
 
 
-Video LINK: 
+Demo: 
 https://drive.google.com/file/d/1QRev0Uz13_w4gdnsx2lhM8WCeEgQW9xY/view
 
 If the video link does not open correctly, the video is included in the project repository.
