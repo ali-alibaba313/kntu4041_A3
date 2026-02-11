@@ -340,7 +340,7 @@ startup.bat   # Windows
 
 ## 📸 Screenshots
 
-![Login Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/login.jpg?raw=true)
+[Login Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/login.jpg?raw=true)
 ![Register Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/register.jpg?raw=true)
 ![Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
 ![Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
