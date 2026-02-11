@@ -72,7 +72,24 @@ Before installation, ensure the following are installed:
 - A modern web browser (Chrome, Firefox, Edge)  
 
 ---
+Screenshots
+## Screenshots
 
+[Login Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/login.jpg?raw=true)
+
+[Register Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/register.jpg?raw=true)
+
+[Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
+
+[Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
+
+
+Video LINK: 
+https://drive.google.com/file/d/1QRev0Uz13_w4gdnsx2lhM8WCeEgQW9xY/view
+
+If the video link does not open correctly, the video is included in the project repository.
+
+Click the file and select View Raw to download it.
 ## Installation and Setup
 
 ### Step 1: Clone the Repository
@@ -213,26 +230,7 @@ GeoServer
 GeoServer Demo Server
 OGC WMS 1.1.1
 
-Screenshots
-## Screenshots
 
-[Login Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/login.jpg?raw=true)
-
-[Register Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/register.jpg?raw=true)
-
-[Map Page](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/map.jpg?raw=true)
-
-[Feature Info](https://github.com/ali-alibaba313/kntu4041_A3/blob/main/screenshots/feature-info.jpg?raw=true)
-
-TEST LINK:
-https://drive.google.com/file/d/1toNZuBlS4KIBnledXDPe20GhbW_Specn/view
-
-Video LINK: 
-https://drive.google.com/file/d/1QRev0Uz13_w4gdnsx2lhM8WCeEgQW9xY/view
-
-If the video link does not open correctly, the video is included in the project repository.
-
-Click the file and select View Raw to download it.
 
 Acknowledgment
 Special thanks to Dr. Nazari for guidance and support.
